@@ -1,0 +1,13 @@
+{
+	"api": {
+		"baseUrl": "http://localhost:4000/api",
+		"signupUrl": "/users",
+		"signinUrl": "/login",
+		"profileUrl": "/user_profile",
+		"createTaskUrl": "/tasks/add",
+		"getTaskUrl": "/tasks/expiry",
+		"userTaskUrl": "/user_tasks",
+		"viewTaskUrl": "/tasks/:{task_id}",
+		"logoutUrl": "/logout"
+	}
+}
