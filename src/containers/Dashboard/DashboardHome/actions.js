@@ -11,6 +11,7 @@ import {
   RECEIVED_USER_TASK_DETAILS,
   DELETE_TASK,
   DELETE_TASK_STATUS,
+  RECEIVED_TASK_FROM_SOCKET,
 } from './constants';
 
 export function createTask(task_name, task_desc, status, expiry_date) {
@@ -97,4 +98,12 @@ export function updateTaskStatus() {
   return {
     type: UPDATE_TASK_STATUS,
   };
+}
+
+//Socket actions
+
+export function receivedTaskFromSocket() {
+  return {
+    type: RECEIVED_TASK_FROM_SOCKET,
+  }
 }

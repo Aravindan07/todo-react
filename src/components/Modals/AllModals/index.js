@@ -57,7 +57,7 @@ const mediumModal = {
   content: {
     background: '#F5F8FD',
     maxWidth: '440px',
-    minHeight: '300px',
+    maxHeight: '500px',
     margin: 'auto',
     padding: '25px 50px',
     position: 'absolute',

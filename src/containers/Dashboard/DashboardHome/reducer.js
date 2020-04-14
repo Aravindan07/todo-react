@@ -6,6 +6,7 @@ import {
   RECEIVED_INDIVIDUAL_USER_TASK,
   VIEW_USER_TASK_DETAILS,
   RECEIVED_USER_TASK_DETAILS,
+  RECEIVED_TASK_FROM_SOCKET,
 }
 from './constants';
 
@@ -21,6 +22,10 @@ const taskReducer = (state = initialState, action) =>
         break;
 
       case RECEIVED_TASK:
+        draft.listTask = action.payload.data;
+        break;
+
+      case RECEIVED_TASK_FROM_SOCKET:
         draft.listTask = action.payload.data;
         break;
 
