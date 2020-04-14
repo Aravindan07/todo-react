@@ -65,7 +65,6 @@ function VerticalBar({
   });
 
   const showDropDown = e => {
-    console.log(node);
     if (node.current.contains(e.target)) {
       setDropdown(true);
       return;

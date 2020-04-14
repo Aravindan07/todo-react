@@ -21,7 +21,6 @@ class FlashMessage extends React.PureComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log('receiving the props');
     const messages = [...this.state.messages];
     messages.push(nextProps.messages);
     this.setState({ messages });
@@ -39,8 +38,6 @@ class FlashMessage extends React.PureComponent {
   }
 
   render () {
-    console.log('rendering flash message');
-    console.log(this.state.messages);
     return (
       <OverallWrapper messageLength={this.state.messages.length}>
         <FlipMove

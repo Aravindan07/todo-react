@@ -1,5 +1,6 @@
-import { call, put, select, takeLatest, take, all } from 'redux-saga/effects';
 import io from 'socket.io-client';
+import { call, put, select, takeLatest, take, all, fork, apply } from 'redux-saga/effects';
+import { eventChannel, delay } from 'redux-saga';
 import request, { makeReqOptions } from '../../../utils/request';
 import config from '../../../config/base.json';
 import {
@@ -17,12 +18,65 @@ import {
   receivedUserTaskDetails,
   deleteTaskStatus,
   updateTaskStatus,
+  deleteTask,
+  createTask,
+  getTask,
+  getIndividualUserTask,
+  receivedTaskFromSocket,
 } from './actions';
 import { flashMessage } from '../../../components/FlashMessage/actions';
 import { closeModal } from '../../../components/Modals/AllModals/actions';
 
+function connect() {
+  const socketUrl = config.api.hostUrl;
+  const socket = io(socketUrl);
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    let connected = false;
+    socket.on('connect', () => {
+      connected = true;
+      return resolve(socket);
+    });
+
+    socket.on('connect_error', () => {
+      if (!connected) {
+        if (attempts <= 2) {
+          attempts += 1;
+          console.log('connection error');
+          socket.connect();
+        } else {
+          reject(new Error('socket connection error'));
+        }
+      }
+    });
+  });
+}
+
+function subscribe (socket) {
+  return eventChannel((emit) => {
+    socket.on('connect_error', () => {
+      console.log('fucked up');
+    });
+
+    socket.on('connect', () => {
+      console.log('into socket strt');
+    });
+
+    socket.on('received_task', function(payload) {
+      const output = payload;
+      const response  = output.payload;
+      emit(receivedTask(response));
+    });
+
+    socket.on('disconnect', () => {
+      console.log('disconnect');
+    });
+
+    return () => {};
+  });
+}
+
 function* createUserTask(action) {
-  console.log('creating user');
 	const requestUrl = config.api.baseUrl + config.api.createTaskUrl;
   try {
     const response = yield call( request, requestUrl, makeReqOptions({
@@ -30,11 +84,13 @@ function* createUserTask(action) {
       apiKey: localStorage.getItem('actix'),
       data: action,
     }));
+      
     yield put(createTaskStatus(response));
     yield put(closeModal());
     yield put(flashMessage(response.message, 'success'));
     yield* fetchIndividualUserTask();
     yield* fetchUserTask();
+
   } catch (e) {
     console.log(e);
   }
@@ -47,7 +103,10 @@ function* fetchUserTask() {
       method: 'GET',
       apiKey: localStorage.getItem('actix'),
     }));
-    yield put(receivedTask(response));
+    const socket = yield call(connect);
+    const socketValue = yield put(receivedTask(response));
+    console.log(response);
+    socket.emit('get_task', socketValue);
   } catch (e) {
     console.log(e);
   }
@@ -125,6 +184,30 @@ function* updateTaskById(action) {
     console.log(e);
   }
 }
+
+function* read(socket) {
+  const channel = yield call(subscribe, socket);
+  while (true) {
+    let action = yield take(channel);
+    yield put(action);
+  }
+}
+
+function* write(socket) {
+    const { payload } = yield take(`${receivedTask}`);
+    socket.emit('task', {payload});
+}
+
+function* handleIO(socket) {
+  yield fork(read, socket);
+  yield fork(write, socket);
+}
+
+function* flow() {
+    const socket = yield call(connect);
+    const task = yield fork(handleIO, socket);
+}
+
 export default function* dashboardSaga() {
   yield all([
     takeLatest(CREATE_TASK, createUserTask),
@@ -134,4 +217,5 @@ export default function* dashboardSaga() {
     takeLatest(DELETE_TASK, deleteTaskById),
     takeLatest(UPDATE_TASK, updateTaskById),
   ]);
+  yield fork(flow);
 }
